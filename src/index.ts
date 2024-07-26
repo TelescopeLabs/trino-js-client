@@ -1,6 +1,8 @@
 import axios, {AxiosRequestConfig, RawAxiosRequestHeaders} from 'axios';
 import * as https from 'https';
 import * as tls from 'tls';
+import Agent, {HttpsAgent} from 'agentkeepalive';   
+
 
 const DEFAULT_SERVER = 'http://localhost:8080';
 const DEFAULT_SOURCE = 'trino-js-client';
@@ -176,11 +178,29 @@ class Client {
   ) {}
 
   static create(options: ConnectionOptions): Client {
-    const agent = new https.Agent({...(options.ssl ?? {}), keepAlive: true});
+
+    const keepAliveAgent = new Agent({
+        maxSockets: 160,
+        maxFreeSockets: 160,
+        timeout: 60000,
+        freeSocketTimeout: 30000,
+        keepAlive: true,
+        keepAliveMsecs: 60000 });
+
+    const httpsKeepAliveAgent = new HttpsAgent({
+        maxSockets: 160,
+        maxFreeSockets: 160,
+        timeout: 60000,
+        freeSocketTimeout: 30000,
+        keepAliveMsecs: 60000,
+        keepAlive: true,
+        ...(options.ssl ?? {}) });
+
 
     const clientConfig: AxiosRequestConfig = {
       baseURL: options.server ?? DEFAULT_SERVER,
-      httpsAgent: agent,
+      httpAgent: keepAliveAgent,
+      httpsAgent: httpsKeepAliveAgent,
     };
 
     const headers: RawAxiosRequestHeaders = {

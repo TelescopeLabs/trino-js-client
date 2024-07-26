@@ -42,6 +42,7 @@
     "typescript": "^5.0.2"
   },
   "dependencies": {
+    "agentkeepalive": "^4.5.0",
     "axios": "1.7.2"
   },
   "scripts": {
