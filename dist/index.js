@@ -44,7 +44,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Trino = exports.QueryIterator = exports.Iterator = exports.BasicAuth = void 0;
 const axios_1 = __importDefault(require("axios"));
-const https = __importStar(require("https"));
+const agentkeepalive_1 = __importStar(require("agentkeepalive"));
 const DEFAULT_SERVER = 'http://localhost:8080';
 const DEFAULT_SOURCE = 'trino-js-client';
 const DEFAULT_USER = process.env.USER;
@@ -100,10 +100,19 @@ class Client {
     }
     static create(options) {
         var _a, _b, _c, _d, _e, _f;
-        const agent = new https.Agent(Object.assign(Object.assign({}, ((_a = options.ssl) !== null && _a !== void 0 ? _a : {})), { keepAlive: true }));
+        const keepAliveAgent = new agentkeepalive_1.default({
+            maxSockets: 160,
+            maxFreeSockets: 160,
+            timeout: 60000,
+            freeSocketTimeout: 30000,
+            keepAlive: true,
+            keepAliveMsecs: 60000
+        });
+        const httpsKeepAliveAgent = new agentkeepalive_1.HttpsAgent(Object.assign({ maxSockets: 160, maxFreeSockets: 160, timeout: 60000, freeSocketTimeout: 30000, keepAliveMsecs: 60000, keepAlive: true }, ((_a = options.ssl) !== null && _a !== void 0 ? _a : {})));
         const clientConfig = {
             baseURL: (_b = options.server) !== null && _b !== void 0 ? _b : DEFAULT_SERVER,
-            httpsAgent: agent,
+            httpAgent: keepAliveAgent,
+            httpsAgent: httpsKeepAliveAgent,
         };
         const headers = {
             [TRINO_USER_HEADER]: DEFAULT_USER,
