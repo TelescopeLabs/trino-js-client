@@ -25,6 +25,7 @@ const TRINO_SET_SESSION_HEADER = TRINO_HEADER_PREFIX + 'Set-Session';
 const TRINO_CLEAR_SESSION_HEADER = TRINO_HEADER_PREFIX + 'Clear-Session';
 const TRINO_SET_ROLE_HEADER = TRINO_HEADER_PREFIX + 'Set-Role';
 const TRINO_EXTRA_CREDENTIAL_HEADER = TRINO_HEADER_PREFIX + 'Extra-Credential';
+const AUTHORIZATION_HEADER = 'Authorization';
 
 export type AuthType = string;
 
@@ -35,6 +36,11 @@ export interface Auth {
 export class BasicAuth implements Auth {
   readonly type: AuthType = 'basic';
   constructor(readonly username: string, readonly password?: string) {}
+}
+
+export class LoginAuth implements Auth {
+  readonly type: AuthType = 'login';
+  constructor(readonly username: string, readonly token: string) {}
 }
 
 export type Session = {[key: string]: string};
@@ -223,9 +229,12 @@ class Client {
 
       headers[TRINO_USER_HEADER] = basic.username;
     }
-
+    else if (options.auth && options.auth.type === 'login') {
+      const basic: LoginAuth = <LoginAuth>options.auth;
+      headers[TRINO_USER_HEADER] = basic.username;
+      headers[AUTHORIZATION_HEADER] = `Bearer ${basic.token}`;
+    }
     clientConfig.headers = cleanHeaders(headers);
-
     return new Client(clientConfig, options);
   }
 

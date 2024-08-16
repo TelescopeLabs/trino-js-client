@@ -10,6 +10,12 @@ export declare class BasicAuth implements Auth {
     readonly type: AuthType;
     constructor(username: string, password?: string | undefined);
 }
+export declare class LoginAuth implements Auth {
+    readonly username: string;
+    readonly token: string;
+    readonly type: AuthType;
+    constructor(username: string, token: string);
+}
 export type Session = {
     [key: string]: string;
 };

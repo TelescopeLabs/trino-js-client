@@ -42,7 +42,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Trino = exports.QueryIterator = exports.Iterator = exports.BasicAuth = void 0;
+exports.Trino = exports.QueryIterator = exports.Iterator = exports.LoginAuth = exports.BasicAuth = void 0;
 const axios_1 = __importDefault(require("axios"));
 const agentkeepalive_1 = __importStar(require("agentkeepalive"));
 const DEFAULT_SERVER = 'http://localhost:8080';
@@ -64,6 +64,7 @@ const TRINO_SET_SESSION_HEADER = TRINO_HEADER_PREFIX + 'Set-Session';
 const TRINO_CLEAR_SESSION_HEADER = TRINO_HEADER_PREFIX + 'Clear-Session';
 const TRINO_SET_ROLE_HEADER = TRINO_HEADER_PREFIX + 'Set-Role';
 const TRINO_EXTRA_CREDENTIAL_HEADER = TRINO_HEADER_PREFIX + 'Extra-Credential';
+const AUTHORIZATION_HEADER = 'Authorization';
 class BasicAuth {
     constructor(username, password) {
         this.username = username;
@@ -72,6 +73,14 @@ class BasicAuth {
     }
 }
 exports.BasicAuth = BasicAuth;
+class LoginAuth {
+    constructor(username, token) {
+        this.username = username;
+        this.token = token;
+        this.type = 'login';
+    }
+}
+exports.LoginAuth = LoginAuth;
 const encodeAsString = (obj) => {
     return Object.entries(obj)
         .map(([key, value]) => `${key}=${value}`)
@@ -129,6 +138,11 @@ class Client {
                 password: (_f = basic.password) !== null && _f !== void 0 ? _f : '',
             };
             headers[TRINO_USER_HEADER] = basic.username;
+        }
+        else if (options.auth && options.auth.type === 'login') {
+            const basic = options.auth;
+            headers[TRINO_USER_HEADER] = basic.username;
+            headers[AUTHORIZATION_HEADER] = `Bearer ${basic.token}`;
         }
         clientConfig.headers = cleanHeaders(headers);
         return new Client(clientConfig, options);
